@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const authRoutes = require('./routes/auth.js');
 const connectDB = require('./config/db.js');
 
 const app = express();
@@ -14,6 +15,8 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({ success: true, message: 'Accountability API is humming along smoothly.' });
 });
+
+app.use('/api/auth', authRoutes);
 
 // Error Handling Middleware Fallback
 app.use((err, req, res, next) => {
