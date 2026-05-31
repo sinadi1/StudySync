@@ -6,11 +6,10 @@ const { protect } = require('../middleware/authMiddleware');
 router.post('/signup', registerUser);
 router.post('/login', loginUser);
 
-router.get('/profile', protect, (req, res) => {
+router.get('/me', protect, (req, res) => {
   res.status(200).json({
     success: true,
-    message: `Welcome to your StudySync Dashboard, ${req.user.name}!`,
-    user: req.user,
+    user: req.user
   });
 });
 
