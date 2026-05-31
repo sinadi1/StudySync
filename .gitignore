@@ -1,0 +1,14 @@
+# Node dependencies
+node_modules/
+
+# Environment files (keeps your private DB URI secrets hidden)
+.env
+backend/.env
+frontend/.env
+
+# Production build outputs
+dist/
+
+# OS specific files
+.DS_Store
+Thumbs.db
