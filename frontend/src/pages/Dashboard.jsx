@@ -27,6 +27,13 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [newTaskText, setNewTaskText] = useState('');
   const [loading, setLoading] = useState(true);
+  const [analyticsData, setAnalyticsData] = useState({
+    totalSubjects: 0,
+    totalHours: 0,
+    totalTasks: 0,
+    completedTasks: 0,
+    taskCompletionRate: 0
+  });
 
   const menuItems = [
     { name: 'Overview', icon: LayoutDashboard },
@@ -131,9 +138,24 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/analytics', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (response.data && response.data.success) {
+          setAnalyticsData(response.data.analytics);
+        }
+      } catch (error) {
+        console.error("Error fetching analytics", error);
+      }
+    };
+
+    if (activeTab === 'Overview') fetchAnalytics();
     if (activeTab === 'Study Tracker') fetchSubjects();
     if (activeTab === 'Tasks') fetchTasks();
-  }, [activeTab]);
+    if (activeTab === 'Analytics') fetchAnalytics();
+  }, [activeTab, token]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -212,29 +234,38 @@ export default function Dashboard() {
 
         <div className="flex-1 p-6 md:p-8 overflow-y-auto">
 
+          {/* OVERVIEW PANEL */}
           {activeTab === 'Overview' && (
             <div className="space-y-6">
               <div className="bg-gradient-to-br from-slate-900 to-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg">
                 <h3 className="text-2xl font-bold text-white mb-2">Welcome to your Workspace, {userData ? userData.name : 'Learner'}! 🚀</h3>
                 <p className="text-slate-400 max-w-2xl">Your profile details have been successfully pulled straight from your MongoDB cloud database cluster.</p>
               </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 <div className="bg-slate-900 p-5 rounded-xl border border-slate-800/80">
-                  <span className="text-sm font-medium text-slate-500 uppercase tracking-wider">Account Role</span>
-                  <div className="text-xl font-bold text-cyan-400 mt-1 capitalize">{userData ? userData.role : 'Student'}</div>
+                  <span className="text-sm font-medium text-slate-500 uppercase tracking-wider">Current Subjects</span>
+                  <div className="text-2xl font-bold text-white mt-1">
+                    {analyticsData.totalSubjects}
+                  </div>
                 </div>
                 <div className="bg-slate-900 p-5 rounded-xl border border-slate-800/80">
-                  <span className="text-sm font-medium text-slate-500 uppercase tracking-wider">Verified Email</span>
-                  <div className="text-base font-semibold text-slate-300 mt-1 truncate">{userData ? userData.email : 'Not Verified'}</div>
+                  <span className="text-sm font-medium text-slate-500 uppercase tracking-wider">Completed Tasks</span>
+                  <div className="text-2xl font-bold text-white mt-1">
+                    {analyticsData.taskCompletionRate}%
+                  </div>
                 </div>
                 <div className="bg-slate-900 p-5 rounded-xl border border-slate-800/80">
-                  <span className="text-sm font-medium text-slate-500 uppercase tracking-wider">Institution</span>
-                  <div className="text-xl font-bold text-white mt-1">{userData ? userData.school : 'Independent Learner'}</div>
+                  <span className="text-sm font-medium text-slate-500 uppercase tracking-wider">Study Hours</span>
+                  <div className="text-2xl font-bold text-white mt-1">
+                    {analyticsData.totalHours} hrs
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
+          {/* STUDY TRACKER PANEL */}
           {activeTab === 'Study Tracker' && (
             <div className="space-y-6">
               <form onSubmit={handleAddSubject} className="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-md flex flex-col sm:flex-row gap-4 items-end sm:items-center">
@@ -267,9 +298,9 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* TASKS PANEL */}
           {activeTab === 'Tasks' && (
             <div className="max-w-3xl mx-auto space-y-6">
-              
               <form onSubmit={handleAddTask} className="bg-slate-900 p-4 rounded-2xl border border-slate-800 flex gap-3 items-center">
                 <input 
                   type="text" 
@@ -314,10 +345,29 @@ export default function Dashboard() {
             </div>
           )}
 
-          {(activeTab === 'Analytics' || activeTab === 'Settings') && (
+          {/* ANALYTICS PANEL */}
+          {activeTab === 'Analytics' && (
+            <div className="space-y-6 max-w-4xl mx-auto">
+              <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800">
+                <h3 className="text-xl font-bold text-white mb-4">Task Execution Metric</h3>
+                <div className="w-full bg-slate-800 h-4 rounded-full overflow-hidden border border-slate-700">
+                  <div 
+                    className="bg-gradient-to-r from-cyan-500 to-blue-500 h-full transition-all duration-500"
+                    style={{ width: `${analyticsData.taskCompletionRate}%` }}
+                  ></div>
+                </div>
+                <p className="text-sm text-slate-400 mt-2">
+                  You have finished <span className="text-cyan-400 font-semibold">{analyticsData.completedTasks}</span> out of <span className="text-slate-200 font-semibold">{analyticsData.totalTasks}</span> assigned check-items.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* SETTINGS PANEL */}
+          {activeTab === 'Settings' && (
             <div className="bg-slate-900 p-8 rounded-2xl border border-slate-800 text-center py-20">
-              <h3 className="text-xl font-bold text-white mb-1">{activeTab} Feature Panel</h3>
-              <p className="text-slate-400 text-sm">This space will host your custom data tracking modules.</p>
+              <h3 className="text-xl font-bold text-white mb-1">Settings Feature Panel</h3>
+              <p className="text-slate-400 text-sm">This space will host your custom account settings configuration modules.</p>
             </div>
           )}
 
