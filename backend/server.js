@@ -16,6 +16,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/subjects', require('./routes/subject'));
+app.use('/api/tasks', require('./routes/task'));
 
 app.use((err, req, res, next) => {
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
