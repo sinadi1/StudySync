@@ -8,6 +8,7 @@ import OverviewView from '../components/dashboard/OverviewView';
 import StudyTrackerView from '../components/dashboard/StudyTrackerView';
 import TasksView from '../components/dashboard/TasksView';
 import AnalyticsView from '../components/dashboard/AnalyticsView';
+import SettingsView from '../components/dashboard/SettingsView';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -71,6 +72,21 @@ export default function Dashboard() {
       }
     } catch (error) {
       alert('Failed to log hours. Try again.');
+    }
+  };
+
+  const handleUpdateProfile = async (updatedFields) => {
+    try {
+      const response = await axios.put('http://localhost:5000/api/auth/profile', updatedFields, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data && response.data.success) {
+        setUserData(response.data.user);
+        return true;
+      }
+    } catch (error) {
+      console.error(error);
+      return false;
     }
   };
 
@@ -167,10 +183,7 @@ export default function Dashboard() {
           {activeTab === 'Tasks' && <TasksView handleAddTask={handleAddTask} newTaskText={newTaskText} setNewTaskText={setNewTaskText} tasks={tasks} handleToggleTask={handleToggleTask} handleDeleteTask={handleDeleteTask}/>}
           {activeTab === 'Analytics' && <AnalyticsView analyticsData={analyticsData} />}
           {activeTab === 'Settings' && (
-            <div className="bg-slate-900 p-8 rounded-2xl border border-slate-800 text-center py-20">
-              <h3 className="text-xl font-bold text-white mb-1">Settings Feature Panel</h3>
-              <p className="text-slate-400 text-sm">This space will host your account configuration modules.</p>
-            </div>
+            <SettingsView userData={userData} handleUpdateProfile={handleUpdateProfile} />
           )}
         </div>
       </main>
