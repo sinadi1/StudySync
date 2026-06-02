@@ -37,3 +37,33 @@ exports.logHours = async (req, res, next) => {
     next(error);
   }
 };
+exports.toggleSubjectStatus = async (req, res, next) => {
+  try {
+    const subject = await Subject.findById(req.params.id);
+
+    if (!subject) {
+      res.status(404);
+      throw new Error('Subject not found');
+    }
+
+    if (subject.user.toString() !== req.user.id) {
+      res.status(401);
+      throw new Error('Not authorized');
+    }
+
+    if (subject.status === 'Completed') {
+      subject.status = 'In Progress';
+    } else {
+      subject.status = 'Completed';
+    }
+
+    await subject.save();
+
+    res.status(200).json({
+      success: true,
+      subject
+    });
+  } catch (error) {
+    next(error);
+  }
+};

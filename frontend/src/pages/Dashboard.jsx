@@ -74,6 +74,19 @@ export default function Dashboard() {
     }
   };
 
+  const handleToggleStatus = async (id) => {
+    try {
+      const response = await axios.put(`http://localhost:5000/api/subjects/${id}/toggle`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data && response.data.success) {
+        fetchSubjects(); // Instantly update UI lists
+      }
+    } catch (error) {
+      alert('Failed to update status. Try again.');
+    }
+  };
+
   const fetchTasks = async () => {
     try {
       const response = await axios.get('http://localhost:5000/api/tasks', { headers: { Authorization: `Bearer ${token}` } });
@@ -150,7 +163,7 @@ export default function Dashboard() {
 
         <div className="flex-1 p-6 md:p-8 overflow-y-auto">
           {activeTab === 'Overview' && <OverviewView userData={userData} analyticsData={analyticsData} />}
-          {activeTab === 'Study Tracker' && <StudyTrackerView handleAddSubject={handleAddSubject} newSubjectName={newSubjectName} setNewSubjectName={setNewSubjectName} subjects={subjects} handleUpdateHours={handleUpdateHours}/>}
+          {activeTab === 'Study Tracker' && <StudyTrackerView handleAddSubject={handleAddSubject} newSubjectName={newSubjectName} setNewSubjectName={setNewSubjectName} subjects={subjects} handleUpdateHours={handleUpdateHours} handleToggleStatus={handleToggleStatus}/>}
           {activeTab === 'Tasks' && <TasksView handleAddTask={handleAddTask} newTaskText={newTaskText} setNewTaskText={setNewTaskText} tasks={tasks} handleToggleTask={handleToggleTask} handleDeleteTask={handleDeleteTask}/>}
           {activeTab === 'Analytics' && <AnalyticsView analyticsData={analyticsData} />}
           {activeTab === 'Settings' && (

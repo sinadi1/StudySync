@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Plus, BookMarked, Clock } from 'lucide-react';
+import { Plus, BookMarked, Clock, CheckCircle, Circle } from 'lucide-react';
 
-export default function StudyTrackerView({ handleAddSubject, newSubjectName, setNewSubjectName, subjects, handleUpdateHours }) {
+export default function StudyTrackerView({ handleAddSubject, newSubjectName, setNewSubjectName, subjects, handleUpdateHours, handleToggleStatus }) {
   const [hoursInput, setHoursInput] = useState({});
 
   const handleInputChange = (id, value) => {
@@ -39,9 +39,24 @@ export default function StudyTrackerView({ handleAddSubject, newSubjectName, set
           {subjects.map((subj) => (
             <div key={subj._id} className="bg-slate-900 p-5 rounded-2xl border border-slate-800 hover:border-slate-700 transition flex flex-col justify-between space-y-4">
               <div>
-                <div className="flex justify-between items-start">
-                  <h4 className="text-lg font-bold text-white truncate max-w-[70%]">{subj.name}</h4>
-                  <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                <div className="flex justify-between items-start gap-2">
+                  <button 
+                    onClick={() => handleToggleStatus(subj._id)} 
+                    className="mt-1 text-slate-500 hover:text-cyan-400 transition flex-shrink-0"
+                    title="Toggle Completion Status"
+                  >
+                    {subj.status === 'Completed' ? (
+                      <CheckCircle className="h-5 w-5 text-emerald-400" />
+                    ) : (
+                      <Circle className="h-5 w-5" />
+                    )}
+                  </button>
+                  
+                  <h4 className={`text-lg font-bold flex-1 truncate ${subj.status === 'Completed' ? 'line-through text-slate-500' : 'text-white'}`}>
+                    {subj.name}
+                  </h4>
+                  
+                  <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold border flex-shrink-0 ${
                     subj.status === 'Completed' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
                     subj.status === 'In Progress' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' :
                     'bg-slate-800 border-slate-700 text-slate-400'
@@ -56,12 +71,17 @@ export default function StudyTrackerView({ handleAddSubject, newSubjectName, set
                   type="number" 
                   min="1"
                   step="any"
+                  disabled={subj.status === 'Completed'}
                   value={hoursInput[subj._id] || ''}
                   onChange={(e) => handleInputChange(subj._id, e.target.value)}
                   placeholder="Hrs" 
-                  className="w-16 rounded-lg border border-slate-700 bg-slate-800/40 py-1.5 px-2 text-center text-sm text-white outline-none focus:border-cyan-500 transition"
+                  className="w-16 rounded-lg border border-slate-700 bg-slate-800/40 py-1.5 px-2 text-center text-sm text-white outline-none focus:border-cyan-500 transition disabled:opacity-40 disabled:cursor-not-allowed"
                 />
-                <button type="submit" className="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition text-cyan-400">
+                <button 
+                  type="submit" 
+                  disabled={subj.status === 'Completed'}
+                  className="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition text-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
                   <Clock className="h-3.5 w-3.5" /> Log Hours
                 </button>
               </form>
