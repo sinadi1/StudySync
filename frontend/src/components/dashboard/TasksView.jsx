@@ -1,7 +1,7 @@
 import React from 'react';
-import { Plus, Square, CheckSquare2 } from 'lucide-react';
+import { Plus, Square, CheckSquare2, Trash2 } from 'lucide-react';
 
-export default function TasksView({ handleAddTask, newTaskText, setNewTaskText, tasks, handleToggleTask }) {
+export default function TasksView({ handleAddTask, newTaskText, setNewTaskText, tasks, handleToggleTask, handleDeleteTask }) {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <form onSubmit={handleAddTask} className="bg-slate-900 p-4 rounded-2xl border border-slate-800 flex gap-3 items-center">
@@ -24,15 +24,27 @@ export default function TasksView({ handleAddTask, newTaskText, setNewTaskText, 
           tasks.map((task) => (
             <div 
               key={task._id} 
-              onClick={() => handleToggleTask(task._id)}
-              className="p-4 flex items-center gap-4 hover:bg-slate-800/30 cursor-pointer transition select-none group"
+              className="p-4 flex items-center justify-between hover:bg-slate-800/30 transition select-none group"
             >
-              <button type="button" className="text-slate-500 group-hover:text-cyan-400 transition flex-shrink-0">
-                {task.completed ? <CheckSquare2 className="h-5 w-5 text-cyan-400" /> : <Square className="h-5 w-5" />}
+              <div 
+                onClick={() => handleToggleTask(task._id)}
+                className="flex items-center gap-4 cursor-pointer flex-1 min-w-0"
+              >
+                <button type="button" className="text-slate-500 group-hover:text-cyan-400 transition flex-shrink-0">
+                  {task.completed ? <CheckSquare2 className="h-5 w-5 text-cyan-400" /> : <Square className="h-5 w-5" />}
+                </button>
+                <span className={`text-sm sm:text-base transition-all duration-150 truncate ${task.completed ? 'line-through text-slate-500' : 'text-slate-200'}`}>
+                  {task.text}
+                </span>
+              </div>
+
+              <button 
+                onClick={() => handleDeleteTask(task._id)}
+                className="text-slate-600 hover:text-rose-400 p-1 rounded-lg hover:bg-rose-500/10 transition ml-2 flex-shrink-0"
+                title="Delete Task"
+              >
+                <Trash2 className="h-4 w-4" />
               </button>
-              <span className={`text-sm sm:text-base transition-all duration-150 ${task.completed ? 'line-through text-slate-500' : 'text-slate-200'}`}>
-                {task.text}
-              </span>
             </div>
           ))
         )}

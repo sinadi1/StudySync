@@ -51,3 +51,25 @@ exports.toggleTask = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.deleteTask = async (req, res, next) => {
+  try {
+    const task = await Task.findById(req.params.id);
+
+    if (!task) {
+      res.status(404);
+      throw new Error('Task not found');
+    }
+
+    if (task.user.toString() !== req.user.id) {
+      res.status(401);
+      throw new Error('Not authorized');
+    }
+
+    await task.deleteOne();
+
+    res.status(200).json({ success: true, message: 'Task removed successfully' });
+  } catch (error) {
+    next(error);
+  }
+};

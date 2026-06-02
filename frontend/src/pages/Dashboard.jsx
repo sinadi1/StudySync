@@ -60,6 +60,20 @@ export default function Dashboard() {
     } catch (error) { alert('Failed to add subject'); }
   };
 
+  const handleUpdateHours = async (id, hours) => {
+    try {
+      const response = await axios.put(`http://localhost:5000/api/subjects/${id}/hours`, 
+        { hours },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data && response.data.success) {
+        fetchSubjects();
+      }
+    } catch (error) {
+      alert('Failed to log hours. Try again.');
+    }
+  };
+
   const fetchTasks = async () => {
     try {
       const response = await axios.get('http://localhost:5000/api/tasks', { headers: { Authorization: `Bearer ${token}` } });
@@ -81,6 +95,19 @@ export default function Dashboard() {
       const response = await axios.put(`http://localhost:5000/api/tasks/${id}`, {}, { headers: { Authorization: `Bearer ${token}` } });
       if (response.data && response.data.success) fetchTasks();
     } catch (error) { console.error(error); }
+  };
+
+  const handleDeleteTask = async (id) => {
+    try {
+      const response = await axios.delete(`http://localhost:5000/api/tasks/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data && response.data.success) {
+        fetchTasks();
+      }
+    } catch (error) {
+      alert('Failed to delete task. Try again.');
+    }
   };
 
   useEffect(() => {
@@ -123,8 +150,8 @@ export default function Dashboard() {
 
         <div className="flex-1 p-6 md:p-8 overflow-y-auto">
           {activeTab === 'Overview' && <OverviewView userData={userData} analyticsData={analyticsData} />}
-          {activeTab === 'Study Tracker' && <StudyTrackerView handleAddSubject={handleAddSubject} newSubjectName={newSubjectName} setNewSubjectName={setNewSubjectName} subjects={subjects} />}
-          {activeTab === 'Tasks' && <TasksView handleAddTask={handleAddTask} newTaskText={newTaskText} setNewTaskText={setNewTaskText} tasks={tasks} handleToggleTask={handleToggleTask} />}
+          {activeTab === 'Study Tracker' && <StudyTrackerView handleAddSubject={handleAddSubject} newSubjectName={newSubjectName} setNewSubjectName={setNewSubjectName} subjects={subjects} handleUpdateHours={handleUpdateHours}/>}
+          {activeTab === 'Tasks' && <TasksView handleAddTask={handleAddTask} newTaskText={newTaskText} setNewTaskText={setNewTaskText} tasks={tasks} handleToggleTask={handleToggleTask} handleDeleteTask={handleDeleteTask}/>}
           {activeTab === 'Analytics' && <AnalyticsView analyticsData={analyticsData} />}
           {activeTab === 'Settings' && (
             <div className="bg-slate-900 p-8 rounded-2xl border border-slate-800 text-center py-20">
