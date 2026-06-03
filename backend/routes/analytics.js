@@ -3,6 +3,6 @@ const router = express.Router();
 const { getAnalytics } = require('../controllers/analyticsController');
 const { protect } = require('../middleware/authMiddleware');
 
-router.get('/', protect, getAnalytics);
+router.route('/').get(protect, getAnalytics);
 
 module.exports = router;

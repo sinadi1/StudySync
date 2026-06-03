@@ -1,5 +1,6 @@
 const Subject = require('../models/Subject');
 const Task = require('../models/Task');
+const User = require('../models/User'); 
 
 exports.getAnalytics = async (req, res, next) => {
   try {
@@ -11,6 +12,7 @@ exports.getAnalytics = async (req, res, next) => {
     ]);
 
     const totalSubjects = subjects.length;
+    const completedSubjects = subjects.filter(s => s.status === 'Completed').length; 
     const totalHours = subjects.reduce((sum, subj) => sum + (subj.hoursStudied || 0), 0);
 
     const totalTasks = tasks.length;
@@ -19,8 +21,9 @@ exports.getAnalytics = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      analytics: {
+      stats: { 
         totalSubjects,
+        completedSubjects, 
         totalHours,
         totalTasks,
         completedTasks,
@@ -35,7 +38,6 @@ exports.getAnalytics = async (req, res, next) => {
 exports.updateProfile = async (req, res, next) => {
   try {
     const { name, school } = req.body;
-
     const user = await User.findById(req.user.id);
 
     if (!user) {
