@@ -2,7 +2,7 @@ const Task = require('../models/Task');
 
 exports.createTask = async (req, res, next) => {
   try {
-    const { text } = req.body;
+    const { text, priority } = req.body;
 
     if (!text) {
       res.status(400);
@@ -11,6 +11,7 @@ exports.createTask = async (req, res, next) => {
 
     const task = await Task.create({
       text,
+      priority: priority || 'Medium',
       user: req.user.id,
     });
 

@@ -110,13 +110,24 @@ export default function Dashboard() {
     } catch (error) { console.error(error); }
   };
 
-  const handleAddTask = async (e) => {
+  const handleAddTask = async (e, priority) => {
     e.preventDefault();
     if (!newTaskText.trim()) return;
     try {
-      const response = await axios.post('http://localhost:5000/api/tasks', { text: newTaskText }, { headers: { Authorization: `Bearer ${token}` } });
-      if (response.data && response.data.success) { setNewTaskText(''); fetchTasks(); }
-    } catch (error) { alert('Failed to add task'); }
+      const response = await axios.post('http://localhost:5000/api/tasks',
+        { 
+          text: newTaskText,
+          priority: priority || 'Medium' 
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data && response.data.success) {
+        setNewTaskText('');
+        fetchTasks(); 
+      }
+    } catch (error) {
+      alert('Failed to add task');
+    }
   };
 
   const handleToggleTask = async (id) => {
