@@ -190,7 +190,7 @@ export default function Dashboard() {
 
         <div className="flex-1 p-6 md:p-8 overflow-y-auto">
           {activeTab === 'Overview' && ( <OverviewView token={token} />)}
-          {activeTab === 'Study Tracker' && <StudyTrackerView handleAddSubject={handleAddSubject} newSubjectName={newSubjectName} setNewSubjectName={setNewSubjectName} subjects={subjects} handleUpdateHours={handleUpdateHours} handleToggleStatus={handleToggleStatus}/>}
+          {activeTab === 'Study Tracker' && <StudyTrackerView handleAddSubject={handleAddSubject} newSubjectName={newSubjectName} setNewSubjectName={setNewSubjectName} subjects={subjects} token={token} handleUpdateHours={handleUpdateHours} handleToggleStatus={handleToggleStatus}/>}
           {activeTab === 'Tasks' && <TasksView handleAddTask={handleAddTask} newTaskText={newTaskText} setNewTaskText={setNewTaskText} tasks={tasks} handleToggleTask={handleToggleTask} handleDeleteTask={handleDeleteTask}/>}
           {activeTab === 'Analytics' && (<AnalyticsView token={token} />
 )}

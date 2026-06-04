@@ -64,3 +64,39 @@ exports.updateProfile = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.getSubjectMilestone = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const subject = await Subject.findOne({ _id: id, user: userId });
+    if (!subject) {
+      res.status(404);
+      throw new Error('Subject track not found');
+    }
+
+    const tasks = await Task.find({ user: userId });
+    const pendingTasksCount = tasks.filter(t => !t.completed).length;
+
+    let insight = "Great initial push! Consistency is key to long-term retention.";
+    if (subject.hoursStudied > 20) {
+      insight = "Deep mastery achieved. Your intensive focus mirrors a highly disciplined engineering sprint.";
+    } else if (subject.hoursStudied > 10) {
+      insight = "Solid developmental block completed. You're building strong momentum.";
+    }
+
+    res.status(200).json({
+      success: true,
+      report: {
+        name: subject.name,
+        hoursStudied: subject.hoursStudied,
+        status: subject.status,
+        remainingQueueTasks: pendingTasksCount,
+        recommendation: insight
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
