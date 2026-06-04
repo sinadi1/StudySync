@@ -47,7 +47,16 @@ const userSchema = new mongoose.Schema(
       subjects: [String],
     }
   },
+  
   {
+    streakCount: {
+    type: Number,
+    default: 0
+  },
+  lastActiveDate: {
+    type: String, 
+    default: ""
+  },
     timestamps: true,
   }
 );

@@ -9,6 +9,7 @@ import StudyTrackerView from '../components/dashboard/StudyTrackerView';
 import TasksView from '../components/dashboard/TasksView';
 import AnalyticsView from '../components/dashboard/AnalyticsView';
 import SettingsView from '../components/dashboard/SettingsView';
+import Toast from '../components/dashboard/Toast';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -21,6 +22,15 @@ export default function Dashboard() {
   const [newTaskText, setNewTaskText] = useState('');
   const [loading, setLoading] = useState(true);
   const [analyticsData, setAnalyticsData] = useState({ totalSubjects: 0, totalHours: 0, totalTasks: 0, completedTasks: 0, taskCompletionRate: 0 });
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = (message, type = 'success') => {
+  const id = Date.now();
+  setToasts((prev) => [...prev, { id, message, type }]);
+  };
+  const removeToast = (id) => {
+  setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
 
   const menuItems = [
     { name: 'Overview', icon: LayoutDashboard },
@@ -61,19 +71,26 @@ export default function Dashboard() {
     } catch (error) { alert('Failed to add subject'); }
   };
 
-  const handleUpdateHours = async (id, hours) => {
-    try {
-      const response = await axios.put(`http://localhost:5000/api/subjects/${id}/hours`, 
-        { hours },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (response.data && response.data.success) {
-        fetchSubjects();
-      }
-    } catch (error) {
-      alert('Failed to log hours. Try again.');
+const handleUpdateHours = async (subjectId, hours) => {
+  try {
+    const res = await axios.put(`http://localhost:5000/api/subjects/${subjectId}/hours`, { hours }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (res.data && res.data.success) {
+      const serverStreak = res.data.streakCount;
+      const finalStreak = (serverStreak !== undefined && serverStreak !== null) ? serverStreak : 1;
+      
+      showToast(`Logged ${hours} hours! 🔥 Current Daily Streak: ${finalStreak} days`, 'success');
+      
+      setSubjects(prev => prev.map(subj => 
+        subj._id === subjectId ? { ...subj, hoursStudied: res.data.hoursStudied } : subj
+      ));
     }
-  };
+  } catch (err) {
+    showToast("Failed to record logged hours", "error");
+  }
+};
 
   const handleUpdateProfile = async (updatedFields) => {
     try {
@@ -150,6 +167,8 @@ export default function Dashboard() {
     }
   };
 
+  
+
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
@@ -190,15 +209,26 @@ export default function Dashboard() {
 
         <div className="flex-1 p-6 md:p-8 overflow-y-auto">
           {activeTab === 'Overview' && ( <OverviewView token={token} />)}
-          {activeTab === 'Study Tracker' && <StudyTrackerView handleAddSubject={handleAddSubject} newSubjectName={newSubjectName} setNewSubjectName={setNewSubjectName} subjects={subjects} token={token} handleUpdateHours={handleUpdateHours} handleToggleStatus={handleToggleStatus}/>}
+          {activeTab === 'Study Tracker' && <StudyTrackerView handleAddSubject={handleAddSubject} newSubjectName={newSubjectName} setNewSubjectName={setNewSubjectName} subjects={subjects} token={token} handleUpdateHours={handleUpdateHours} handleToggleStatus={handleToggleStatus} showToast={showToast}/>}
           {activeTab === 'Tasks' && <TasksView handleAddTask={handleAddTask} newTaskText={newTaskText} setNewTaskText={setNewTaskText} tasks={tasks} handleToggleTask={handleToggleTask} handleDeleteTask={handleDeleteTask}/>}
           {activeTab === 'Analytics' && (<AnalyticsView token={token} />
-)}
+           )}
           {activeTab === 'Settings' && (
             <SettingsView userData={userData} handleUpdateProfile={handleUpdateProfile} />
           )}
         </div>
       </main>
+      <div className="fixed top-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none">
+        {toasts.map((t) => (
+          <div key={t.id} className="pointer-events-auto">
+            <Toast 
+              message={t.message} 
+              type={t.type} 
+              onClose={() => removeToast(t.id)} 
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

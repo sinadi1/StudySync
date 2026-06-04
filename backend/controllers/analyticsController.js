@@ -100,3 +100,39 @@ exports.getSubjectMilestone = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.updateUserStreak = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    if (!user) return 0;
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    
+    if (user.lastActiveDate === todayStr) {
+      return user.streakCount;
+    }
+
+    if (!user.lastActiveDate) {
+      user.streakCount = 1;
+    } else {
+      const lastActive = new Date(user.lastActiveDate);
+      const today = new Date(todayStr);
+ 
+      const diffTime = Math.abs(today - lastActive);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) {
+        user.streakCount += 1;
+      } else {
+        user.streakCount = 1;
+      }
+    }
+
+    user.lastActiveDate = todayStr;
+    await user.save();
+    return user.streakCount;
+  } catch (error) {
+    console.error("Streak calculation fault:", error);
+    return 0;
+  }
+};

@@ -10,6 +10,7 @@ export default function StudyTrackerView({
   token,
   handleToggleStatus,
   handleUpdateHours,
+  showToast,
 }) {
   const [hoursInput, setHoursInput] = useState({});
   const [milestoneReport, setMilestoneReport] = useState(null);
@@ -28,7 +29,7 @@ export default function StudyTrackerView({
         setShowModal(true);
       }
     } catch (err) {
-      alert("Failed to load report");
+    showToast("Failed to load session milestone metrics", "error");
     }
   };
 
