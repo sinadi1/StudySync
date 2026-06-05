@@ -11,6 +11,7 @@ import AnalyticsView from '../components/dashboard/AnalyticsView';
 import SettingsView from '../components/dashboard/SettingsView';
 import Toast from '../components/dashboard/Toast';
 import ActivityHeatmap from '../components/dashboard/ActivityHeatmap';
+import AnalyticsChart from '../components/dashboard/AnalyticsChart';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -212,6 +213,7 @@ const handleUpdateHours = async (subjectId, hours) => {
          {activeTab === 'Overview' && (
             <div className="space-y-6">
               <ActivityHeatmap activeDates={userData?.lastActiveDate ? [userData.lastActiveDate] : []} />
+              <AnalyticsChart subjects={subjects} />
               <OverviewView token={token} />
             </div>
           )}
