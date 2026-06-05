@@ -12,6 +12,8 @@ import SettingsView from '../components/dashboard/SettingsView';
 import Toast from '../components/dashboard/Toast';
 import ActivityHeatmap from '../components/dashboard/ActivityHeatmap';
 import AnalyticsChart from '../components/dashboard/AnalyticsChart';
+import PomodoroTimer from '../components/dashboard/PomodoroTimer';
+import MilestoneBadges from '../components/dashboard/MilestoneBadges';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -27,11 +29,12 @@ export default function Dashboard() {
   const [toasts, setToasts] = useState([]);
 
   const showToast = (message, type = 'success') => {
-  const id = Date.now();
-  setToasts((prev) => [...prev, { id, message, type }]);
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, message, type }]);
   };
+  
   const removeToast = (id) => {
-  setToasts((prev) => prev.filter((t) => t.id !== id));
+    setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
   const menuItems = [
@@ -44,6 +47,7 @@ export default function Dashboard() {
 
   const token = localStorage.getItem('token');
 
+  // Core profile retrieval loop
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -64,6 +68,20 @@ export default function Dashboard() {
     } catch (error) { console.error(error); }
   };
 
+  const fetchTasks = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/tasks', { headers: { Authorization: `Bearer ${token}` } });
+      if (response.data && response.data.success) setTasks(response.data.tasks);
+    } catch (error) { console.error(error); }
+  };
+
+  const fetchAnalytics = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/analytics', { headers: { Authorization: `Bearer ${token}` } });
+      if (response.data && response.data.success) setAnalyticsData(response.data.analytics);
+    } catch (error) { console.error(error); }
+  };
+
   const handleAddSubject = async (e) => {
     e.preventDefault();
     if (!newSubjectName.trim()) return;
@@ -73,26 +91,26 @@ export default function Dashboard() {
     } catch (error) { alert('Failed to add subject'); }
   };
 
-const handleUpdateHours = async (subjectId, hours) => {
-  try {
-    const res = await axios.put(`http://localhost:5000/api/subjects/${subjectId}/hours`, { hours }, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+  const handleUpdateHours = async (subjectId, hours) => {
+    try {
+      const res = await axios.put(`http://localhost:5000/api/subjects/${subjectId}/hours`, { hours }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-    if (res.data && res.data.success) {
-      const serverStreak = res.data.streakCount;
-      const finalStreak = (serverStreak !== undefined && serverStreak !== null) ? serverStreak : 1;
-      
-      showToast(`Logged ${hours} hours! 🔥 Current Daily Streak: ${finalStreak} days`, 'success');
-      
-      setSubjects(prev => prev.map(subj => 
-        subj._id === subjectId ? { ...subj, hoursStudied: res.data.hoursStudied } : subj
-      ));
+      if (res.data && res.data.success) {
+        const serverStreak = res.data.streakCount;
+        const finalStreak = (serverStreak !== undefined && serverStreak !== null) ? serverStreak : 1;
+        
+        showToast(`Logged ${hours} hours! 🔥 Current Daily Streak: ${finalStreak} days`, 'success');
+        
+        setSubjects(prev => prev.map(subj => 
+          subj._id === subjectId ? { ...subj, hoursStudied: res.data.hoursStudied } : subj
+        ));
+      }
+    } catch (err) {
+      showToast("Failed to record logged hours", "error");
     }
-  } catch (err) {
-    showToast("Failed to record logged hours", "error");
-  }
-};
+  };
 
   const handleUpdateProfile = async (updatedFields) => {
     try {
@@ -115,18 +133,11 @@ const handleUpdateHours = async (subjectId, hours) => {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data && response.data.success) {
-        fetchSubjects(); // Instantly update UI lists
+        fetchSubjects();
       }
     } catch (error) {
       alert('Failed to update status. Try again.');
     }
-  };
-
-  const fetchTasks = async () => {
-    try {
-      const response = await axios.get('http://localhost:5000/api/tasks', { headers: { Authorization: `Bearer ${token}` } });
-      if (response.data && response.data.success) setTasks(response.data.tasks);
-    } catch (error) { console.error(error); }
   };
 
   const handleAddTask = async (e, priority) => {
@@ -134,10 +145,7 @@ const handleUpdateHours = async (subjectId, hours) => {
     if (!newTaskText.trim()) return;
     try {
       const response = await axios.post('http://localhost:5000/api/tasks',
-        { 
-          text: newTaskText,
-          priority: priority || 'Medium' 
-        },
+        { text: newTaskText, priority: priority || 'Medium' },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (response.data && response.data.success) {
@@ -149,55 +157,44 @@ const handleUpdateHours = async (subjectId, hours) => {
     }
   };
 
-const handleToggleTask = async (id) => {
-  try {
-    const res = await axios.put(`http://localhost:5000/api/tasks/${id}`, {}, { 
-      headers: { Authorization: `Bearer ${token}` } 
-    });
+  const handleToggleTask = async (id) => {
+    try {
+      const res = await axios.put(`http://localhost:5000/api/tasks/${id}`, {}, { 
+        headers: { Authorization: `Bearer ${token}` } 
+      });
 
-    if (res.data && res.data.success) {
-      fetchTasks();
-      
-      if (res.data.autoLogged) {
-        const streak = res.data.streakCount || 1;
-        showToast(`Task complete! +0.5 hrs added to study tracks! 🔥 Streak: ${streak} days`, 'success');
+      if (res.data && res.data.success) {
+        fetchTasks();
         
-        if (typeof fetchSubjects === 'function') {
+        if (res.data.autoLogged) {
+          const streak = res.data.streakCount || 1;
+          showToast(`Task complete! +0.5 hrs added to study tracks! 🔥 Streak: ${streak} days`, 'success');
           fetchSubjects(); 
+        } else {
+          showToast("Task status updated", "info");
         }
-      } else {
-        showToast("Task status updated", "info");
       }
+    } catch (error) {
+      showToast("Failed to update task status", "error");
     }
-  } catch (error) {
-    showToast("Failed to update task status", "error");
-  }
-};
+  };
 
   const handleDeleteTask = async (id) => {
     try {
       const response = await axios.delete(`http://localhost:5000/api/tasks/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (response.data && response.data.success) {
-        fetchTasks();
-      }
+      if (response.data && response.data.success) fetchTasks();
     } catch (error) {
       alert('Failed to delete task. Try again.');
     }
   };
 
-  
-
   useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        const response = await axios.get('http://localhost:5000/api/analytics', { headers: { Authorization: `Bearer ${token}` } });
-        if (response.data && response.data.success) setAnalyticsData(response.data.analytics);
-      } catch (error) { console.error(error); }
-    };
-
-    if (activeTab === 'Overview') fetchAnalytics();
+    if (activeTab === 'Overview') {
+      fetchAnalytics();
+      fetchSubjects(); 
+    }
     if (activeTab === 'Study Tracker') fetchSubjects();
     if (activeTab === 'Tasks') fetchTasks();
     if (activeTab === 'Analytics') fetchAnalytics();
@@ -228,30 +225,55 @@ const handleToggleTask = async (id) => {
         </header>
 
         <div className="flex-1 p-6 md:p-8 overflow-y-auto">
-         {activeTab === 'Overview' && (
+          <PomodoroTimer showToast={showToast} />
+
+          {activeTab === 'Overview' && (
             <div className="space-y-6">
               <ActivityHeatmap activeDates={userData?.lastActiveDate ? [userData.lastActiveDate] : []} />
               <AnalyticsChart subjects={subjects} />
+              <MilestoneBadges subjects={subjects} streakCount={userData?.streakCount || 0} />
               <OverviewView token={token} />
             </div>
           )}
-          {activeTab === 'Study Tracker' && <StudyTrackerView handleAddSubject={handleAddSubject} newSubjectName={newSubjectName} setNewSubjectName={setNewSubjectName} subjects={subjects} token={token} handleUpdateHours={handleUpdateHours} handleToggleStatus={handleToggleStatus} showToast={showToast}/>}
-          {activeTab === 'Tasks' && <TasksView handleAddTask={handleAddTask} newTaskText={newTaskText} setNewTaskText={setNewTaskText} tasks={tasks} handleToggleTask={handleToggleTask} handleDeleteTask={handleDeleteTask}/>}
-          {activeTab === 'Analytics' && (<AnalyticsView token={token} />
-           )}
+          
+          {activeTab === 'Study Tracker' && (
+            <StudyTrackerView 
+              handleAddSubject={handleAddSubject} 
+              newSubjectName={newSubjectName} 
+              setNewSubjectName={setNewSubjectName} 
+              subjects={subjects} 
+              token={token} 
+              handleUpdateHours={handleUpdateHours}
+              handleToggleStatus={handleToggleStatus} 
+              showToast={showToast}
+            />
+          )}
+          
+          {activeTab === 'Tasks' && (
+            <TasksView 
+              handleAddTask={handleAddTask} 
+              newTaskText={newTaskText} 
+              setNewTaskText={setNewTaskText} 
+              tasks={tasks} 
+              handleToggleTask={handleToggleTask} 
+              handleDeleteTask={handleDeleteTask}
+            />
+          )}
+          
+          {activeTab === 'Analytics' && (
+            <AnalyticsView token={token} />
+          )}
+          
           {activeTab === 'Settings' && (
             <SettingsView userData={userData} handleUpdateProfile={handleUpdateProfile} />
           )}
         </div>
       </main>
+
       <div className="fixed top-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none">
         {toasts.map((t) => (
           <div key={t.id} className="pointer-events-auto">
-            <Toast 
-              message={t.message} 
-              type={t.type} 
-              onClose={() => removeToast(t.id)} 
-            />
+            <Toast message={t.message} type={t.type} onClose={() => removeToast(t.id)} />
           </div>
         ))}
       </div>
