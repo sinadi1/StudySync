@@ -1,4 +1,6 @@
 const Task = require('../models/Task');
+const Subject = require('../models/Subject');
+const { updateUserStreak } = require('./analyticsController');
 
 exports.createTask = async (req, res, next) => {
   try {
@@ -70,6 +72,52 @@ exports.deleteTask = async (req, res, next) => {
     await task.deleteOne();
 
     res.status(200).json({ success: true, message: 'Task removed successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.toggleTaskStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const task = await Task.findOne({ _id: id, user: req.user.id });
+
+    if (!task) {
+      res.status(404);
+      throw new Error('Task not found');
+    }
+
+    task.status = task.status === 'Completed' ? 'Pending' : 'Completed';
+    await task.save();
+
+    let autoLogged = false;
+    let streakCount = undefined;
+
+    if (task.status === 'Completed') {
+      let subject = await Subject.findOne({ 
+        user: req.user.id, 
+        name: { $regex: task.title.split(' ')[0], $options: 'i' } 
+      });
+
+      if (!subject) {
+        subject = await Subject.findOne({ user: req.user.id });
+      }
+
+      if (subject && subject.status !== 'Completed') {
+        subject.hoursStudied += 0.5;
+        await subject.save();
+        autoLogged = true;
+
+        streakCount = await updateUserStreak(req.user.id);
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      task,
+      autoLogged,
+      streakCount
+    });
   } catch (error) {
     next(error);
   }

@@ -149,12 +149,30 @@ const handleUpdateHours = async (subjectId, hours) => {
     }
   };
 
-  const handleToggleTask = async (id) => {
-    try {
-      const response = await axios.put(`http://localhost:5000/api/tasks/${id}`, {}, { headers: { Authorization: `Bearer ${token}` } });
-      if (response.data && response.data.success) fetchTasks();
-    } catch (error) { console.error(error); }
-  };
+const handleToggleTask = async (id) => {
+  try {
+    const res = await axios.put(`http://localhost:5000/api/tasks/${id}`, {}, { 
+      headers: { Authorization: `Bearer ${token}` } 
+    });
+
+    if (res.data && res.data.success) {
+      fetchTasks();
+      
+      if (res.data.autoLogged) {
+        const streak = res.data.streakCount || 1;
+        showToast(`Task complete! +0.5 hrs added to study tracks! 🔥 Streak: ${streak} days`, 'success');
+        
+        if (typeof fetchSubjects === 'function') {
+          fetchSubjects(); 
+        }
+      } else {
+        showToast("Task status updated", "info");
+      }
+    }
+  } catch (error) {
+    showToast("Failed to update task status", "error");
+  }
+};
 
   const handleDeleteTask = async (id) => {
     try {
