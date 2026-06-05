@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 exports.getAnalytics = async (req, res, next) => {
   try {
     const userId = new mongoose.Types.ObjectId(req.user.id);
+
     const [subjectStats, taskStats] = await Promise.all([
       Subject.aggregate([
         { $match: { user: userId } },
@@ -17,7 +18,7 @@ exports.getAnalytics = async (req, res, next) => {
           }
         }
       ]),
-
+      
       Task.aggregate([
         { $match: { user: userId } },
         {
@@ -25,7 +26,18 @@ exports.getAnalytics = async (req, res, next) => {
             _id: null,
             totalTasks: { $sum: 1 },
             completedTasks: {
-              $sum: { $cond: [{ $eq: ["$status", "Completed"] }, 1, 0] }
+              $sum: { 
+                $cond: [
+                  { 
+                    $or: [
+                      { $eq: ["$completed", true] },
+                      { $eq: ["$status", "Completed"] }
+                    ]
+                  }, 
+                  1, 
+                  0
+                ] 
+              }
             }
           }
         }
@@ -34,7 +46,7 @@ exports.getAnalytics = async (req, res, next) => {
 
     const sData = subjectStats[0] || { totalHours: 0, totalSubjects: 0 };
     const tData = taskStats[0] || { totalTasks: 0, completedTasks: 0 };
-
+  
     const completionRate = tData.totalTasks > 0 
       ? Math.round((tData.completedTasks / tData.totalTasks) * 100) 
       : 0;
@@ -56,7 +68,7 @@ exports.getAnalytics = async (req, res, next) => {
 
 exports.updateProfile = async (req, res, next) => {
   try {
-    const { name, school } = req.body;
+    const { name, email, school } = req.body; 
     const user = await User.findById(req.user.id);
 
     if (!user) {
@@ -65,6 +77,7 @@ exports.updateProfile = async (req, res, next) => {
     }
 
     if (name) user.name = name;
+    if (email) user.email = email;
     if (school) user.school = school;
 
     const updatedUser = await user.save();
@@ -96,7 +109,7 @@ exports.getSubjectMilestone = async (req, res, next) => {
     }
 
     const tasks = await Task.find({ user: userId });
-    const pendingTasksCount = tasks.filter(t => !t.completed).length;
+    const pendingTasksCount = tasks.filter(t => !t.completed && t.status !== 'Completed').length;
 
     let insight = "Great initial push! Consistency is key to long-term retention.";
     if (subject.hoursStudied > 20) {
@@ -136,7 +149,7 @@ exports.updateUserStreak = async (userId) => {
     } else {
       const lastActive = new Date(user.lastActiveDate);
       const today = new Date(todayStr);
- 
+
       const diffTime = Math.abs(today - lastActive);
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
@@ -156,56 +169,4 @@ exports.updateUserStreak = async (userId) => {
   }
 };
 
-
-exports.getPerformanceReport = async (req, res, next) => {
-  try {
-    const userId = new mongoose.Types.ObjectId(req.user.id);
-
-    const [subjectStats, taskStats] = await Promise.all([
-      // 1. Calculate Subject Metrics
-      Subject.aggregate([
-        { $match: { user: userId } },
-        {
-          $group: {
-            _id: null,
-            totalHours: { $sum: "$hoursStudied" },
-            totalSubjects: { $sum: 1 }
-          }
-        }
-      ]),
-      
-      Task.aggregate([
-        { $match: { user: userId } },
-        {
-          $group: {
-            _id: null,
-            totalTasks: { $sum: 1 },
-            completedTasks: {
-              $sum: { $cond: [{ $eq: ["$status", "Completed"] }, 1, 0] }
-            }
-          }
-        }
-      ])
-    ]);
-
-    const sData = subjectStats[0] || { totalHours: 0, totalSubjects: 0 };
-    const tData = taskStats[0] || { totalTasks: 0, completedTasks: 0 };
-
-    const completionRate = tData.totalTasks > 0 
-      ? Math.round((tData.completedTasks / tData.totalTasks) * 100) 
-      : 0;
-
-    res.status(200).json({
-      success: true,
-      analytics: {
-        totalSubjects: sData.totalSubjects,
-        totalHours: sData.totalHours,
-        totalTasks: tData.totalTasks,
-        completedTasks: tData.completedTasks,
-        taskCompletionRate: completionRate
-      }
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+exports.getPerformanceReport = exports.getAnalytics;
