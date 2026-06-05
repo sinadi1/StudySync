@@ -14,6 +14,7 @@ import ActivityHeatmap from '../components/dashboard/ActivityHeatmap';
 import AnalyticsChart from '../components/dashboard/AnalyticsChart';
 import PomodoroTimer from '../components/dashboard/PomodoroTimer';
 import MilestoneBadges from '../components/dashboard/MilestoneBadges';
+import SkeletonCard from '../components/dashboard/SkeletonCard';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -47,7 +48,6 @@ export default function Dashboard() {
 
   const token = localStorage.getItem('token');
 
-  // Core profile retrieval loop
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -202,7 +202,36 @@ export default function Dashboard() {
 
   const handleLogout = () => { localStorage.removeItem('token'); navigate('/login'); };
 
-  if (loading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-cyan-400 font-semibold tracking-wider">Loading workspace...</div>;
+if (loading) {
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex">
+      <div className="w-64 border-r border-slate-800/60 bg-slate-950 hidden md:block p-6 space-y-6">
+        <div className="h-8 bg-slate-900 rounded-xl w-3/4 animate-pulse"></div>
+        <div className="space-y-3 pt-8">
+          <div className="h-10 bg-slate-900 rounded-xl w-full animate-pulse"></div>
+          <div className="h-10 bg-slate-900 rounded-xl w-full animate-pulse"></div>
+          <div className="h-10 bg-slate-900 rounded-xl w-full animate-pulse"></div>
+        </div>
+      </div>
+
+      <div className="flex-1 min-w-0 flex flex-col">
+        <div className="h-16 border-b border-slate-800/60 bg-slate-950 flex items-center justify-between px-8 hidden md:flex">
+          <div className="h-5 bg-slate-900 rounded-md w-24 animate-pulse"></div>
+          <div className="h-8 bg-slate-900 rounded-full w-32 animate-pulse"></div>
+        </div>
+
+        <div className="flex-1 p-6 md:p-8 space-y-6 overflow-y-auto">
+          <div className="h-24 bg-slate-900/40 border border-slate-800 rounded-2xl animate-pulse"></div>
+
+          <div className="space-y-4">
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex">
