@@ -10,6 +10,7 @@ import TasksView from '../components/dashboard/TasksView';
 import AnalyticsView from '../components/dashboard/AnalyticsView';
 import SettingsView from '../components/dashboard/SettingsView';
 import Toast from '../components/dashboard/Toast';
+import ActivityHeatmap from '../components/dashboard/ActivityHeatmap';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -208,7 +209,12 @@ const handleUpdateHours = async (subjectId, hours) => {
         </header>
 
         <div className="flex-1 p-6 md:p-8 overflow-y-auto">
-          {activeTab === 'Overview' && ( <OverviewView token={token} />)}
+         {activeTab === 'Overview' && (
+            <div className="space-y-6">
+              <ActivityHeatmap activeDates={userData?.lastActiveDate ? [userData.lastActiveDate] : []} />
+              <OverviewView token={token} />
+            </div>
+          )}
           {activeTab === 'Study Tracker' && <StudyTrackerView handleAddSubject={handleAddSubject} newSubjectName={newSubjectName} setNewSubjectName={setNewSubjectName} subjects={subjects} token={token} handleUpdateHours={handleUpdateHours} handleToggleStatus={handleToggleStatus} showToast={showToast}/>}
           {activeTab === 'Tasks' && <TasksView handleAddTask={handleAddTask} newTaskText={newTaskText} setNewTaskText={setNewTaskText} tasks={tasks} handleToggleTask={handleToggleTask} handleDeleteTask={handleDeleteTask}/>}
           {activeTab === 'Analytics' && (<AnalyticsView token={token} />
