@@ -1,33 +1,52 @@
 const Subject = require('../models/Subject');
 const Task = require('../models/Task');
 const User = require('../models/User'); 
+const mongoose = require('mongoose');
 
 exports.getAnalytics = async (req, res, next) => {
   try {
-    const userId = req.user.id;
+    const userId = new mongoose.Types.ObjectId(req.user.id);
+    const [subjectStats, taskStats] = await Promise.all([
+      Subject.aggregate([
+        { $match: { user: userId } },
+        {
+          $group: {
+            _id: null,
+            totalHours: { $sum: "$hoursStudied" },
+            totalSubjects: { $sum: 1 }
+          }
+        }
+      ]),
 
-    const [subjects, tasks] = await Promise.all([
-      Subject.find({ user: userId }),
-      Task.find({ user: userId })
+      Task.aggregate([
+        { $match: { user: userId } },
+        {
+          $group: {
+            _id: null,
+            totalTasks: { $sum: 1 },
+            completedTasks: {
+              $sum: { $cond: [{ $eq: ["$status", "Completed"] }, 1, 0] }
+            }
+          }
+        }
+      ])
     ]);
 
-    const totalSubjects = subjects.length;
-    const completedSubjects = subjects.filter(s => s.status === 'Completed').length; 
-    const totalHours = subjects.reduce((sum, subj) => sum + (subj.hoursStudied || 0), 0);
+    const sData = subjectStats[0] || { totalHours: 0, totalSubjects: 0 };
+    const tData = taskStats[0] || { totalTasks: 0, completedTasks: 0 };
 
-    const totalTasks = tasks.length;
-    const completedTasks = tasks.filter(task => task.completed).length;
-    const taskCompletionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    const completionRate = tData.totalTasks > 0 
+      ? Math.round((tData.completedTasks / tData.totalTasks) * 100) 
+      : 0;
 
     res.status(200).json({
       success: true,
-      stats: { 
-        totalSubjects,
-        completedSubjects, 
-        totalHours,
-        totalTasks,
-        completedTasks,
-        taskCompletionRate
+      analytics: {
+        totalSubjects: sData.totalSubjects,
+        totalHours: sData.totalHours,
+        totalTasks: tData.totalTasks,
+        completedTasks: tData.completedTasks,
+        taskCompletionRate: completionRate
       }
     });
   } catch (error) {
@@ -134,5 +153,59 @@ exports.updateUserStreak = async (userId) => {
   } catch (error) {
     console.error("Streak calculation fault:", error);
     return 0;
+  }
+};
+
+
+exports.getPerformanceReport = async (req, res, next) => {
+  try {
+    const userId = new mongoose.Types.ObjectId(req.user.id);
+
+    const [subjectStats, taskStats] = await Promise.all([
+      // 1. Calculate Subject Metrics
+      Subject.aggregate([
+        { $match: { user: userId } },
+        {
+          $group: {
+            _id: null,
+            totalHours: { $sum: "$hoursStudied" },
+            totalSubjects: { $sum: 1 }
+          }
+        }
+      ]),
+      
+      Task.aggregate([
+        { $match: { user: userId } },
+        {
+          $group: {
+            _id: null,
+            totalTasks: { $sum: 1 },
+            completedTasks: {
+              $sum: { $cond: [{ $eq: ["$status", "Completed"] }, 1, 0] }
+            }
+          }
+        }
+      ])
+    ]);
+
+    const sData = subjectStats[0] || { totalHours: 0, totalSubjects: 0 };
+    const tData = taskStats[0] || { totalTasks: 0, completedTasks: 0 };
+
+    const completionRate = tData.totalTasks > 0 
+      ? Math.round((tData.completedTasks / tData.totalTasks) * 100) 
+      : 0;
+
+    res.status(200).json({
+      success: true,
+      analytics: {
+        totalSubjects: sData.totalSubjects,
+        totalHours: sData.totalHours,
+        totalTasks: tData.totalTasks,
+        completedTasks: tData.completedTasks,
+        taskCompletionRate: completionRate
+      }
+    });
+  } catch (error) {
+    next(error);
   }
 };
