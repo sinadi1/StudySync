@@ -75,9 +75,10 @@ export default function Dashboard() {
     } catch (error) { console.error(error); }
   };
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = async (range = 'all') => {
     try {
-      const response = await axios.get('http://localhost:5000/api/analytics', { headers: { Authorization: `Bearer ${token}` } });
+      const queryParam = range !== 'all' ? `?range=${range}` : '';
+      const response = await axios.get(`http://localhost:5000/api/analytics${queryParam}`, { headers: { Authorization: `Bearer ${token}` } });
       if (response.data && response.data.success) setAnalyticsData(response.data.analytics);
     } catch (error) { console.error(error); }
   };
@@ -202,39 +203,40 @@ export default function Dashboard() {
 
   const handleLogout = () => { localStorage.removeItem('token'); navigate('/login'); };
 
-if (loading) {
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex">
-      <div className="w-64 border-r border-slate-800/60 bg-slate-950 hidden md:block p-6 space-y-6">
-        <div className="h-8 bg-slate-900 rounded-xl w-3/4 animate-pulse"></div>
-        <div className="space-y-3 pt-8">
-          <div className="h-10 bg-slate-900 rounded-xl w-full animate-pulse"></div>
-          <div className="h-10 bg-slate-900 rounded-xl w-full animate-pulse"></div>
-          <div className="h-10 bg-slate-900 rounded-xl w-full animate-pulse"></div>
-        </div>
-      </div>
-
-      <div className="flex-1 min-w-0 flex flex-col">
-        <div className="h-16 border-b border-slate-800/60 bg-slate-950 flex items-center justify-between px-8 hidden md:flex">
-          <div className="h-5 bg-slate-900 rounded-md w-24 animate-pulse"></div>
-          <div className="h-8 bg-slate-900 rounded-full w-32 animate-pulse"></div>
+  if (loading) {
+    return (
+      <div className="h-screen w-screen bg-slate-950 text-slate-100 flex overflow-hidden">
+        <div className="w-64 h-full border-r border-slate-800/60 bg-slate-950 hidden md:block p-6 space-y-6 flex-shrink-0">
+          <div className="h-8 bg-slate-900 rounded-xl w-3/4 animate-pulse"></div>
+          <div className="space-y-3 pt-8">
+            <div className="h-10 bg-slate-900 rounded-xl w-full animate-pulse"></div>
+            <div className="h-10 bg-slate-900 rounded-xl w-full animate-pulse"></div>
+            <div className="h-10 bg-slate-900 rounded-xl w-full animate-pulse"></div>
+          </div>
         </div>
 
-        <div className="flex-1 p-6 md:p-8 space-y-6 overflow-y-auto">
-          <div className="h-24 bg-slate-900/40 border border-slate-800 rounded-2xl animate-pulse"></div>
+        <div className="flex-1 h-full min-w-0 flex flex-col overflow-hidden">
+          <div className="h-16 border-b border-slate-800/60 bg-slate-950 flex items-center justify-between px-8 hidden md:flex shrink-0">
+            <div className="h-5 bg-slate-900 rounded-md w-24 animate-pulse"></div>
+            <div className="h-8 bg-slate-900 rounded-full w-32 animate-pulse"></div>
+          </div>
 
-          <div className="space-y-4">
-            <SkeletonCard />
-            <SkeletonCard />
+          <div className="flex-1 p-6 md:p-8 space-y-6 overflow-y-auto">
+            <div className="h-24 bg-slate-900/40 border border-slate-800 rounded-2xl animate-pulse"></div>
+
+            <div className="space-y-4">
+              <SkeletonCard />
+              <SkeletonCard />
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex">
+    <div className="h-screen w-screen bg-slate-950 text-slate-100 flex overflow-hidden">
+      {/* Mobile Top Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 z-50">
         <span className="text-xl font-bold tracking-wider text-cyan-400">StudySync</span>
         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 text-slate-400 hover:text-white">
@@ -242,10 +244,19 @@ if (loading) {
         </button>
       </div>
 
-      <Sidebar menuItems={menuItems} activeTab={activeTab} setActiveTab={setActiveTab} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} handleLogout={handleLogout} />
+      {/* Sidebar - Lock Fixed Height */}
+      <Sidebar 
+        menuItems={menuItems} 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        isSidebarOpen={isSidebarOpen} 
+        setIsSidebarOpen={setIsSidebarOpen} 
+        handleLogout={handleLogout} 
+      />
 
-      <main className="flex-1 min-w-0 flex flex-col pt-16 md:pt-0">
-        <header className="h-16 border-b border-slate-800/60 bg-slate-950 flex items-center justify-between px-8 hidden md:flex">
+      {/* Main Container - Takes remaining width and manages internal vertical scroll */}
+      <main className="flex-1 h-full min-w-0 flex flex-col overflow-hidden pt-16 md:pt-0">
+        <header className="h-16 border-b border-slate-800/60 bg-slate-950 flex items-center justify-between px-8 hidden md:flex shrink-0">
           <h2 className="text-xl font-semibold text-white">{activeTab}</h2>
           <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-4 py-1.5 rounded-full">
             <UserIcon className="h-4 w-4 text-cyan-400" />
@@ -253,7 +264,8 @@ if (loading) {
           </div>
         </header>
 
-        <div className="flex-1 p-6 md:p-8 overflow-y-auto">
+        {/* Scrollable View Box */}
+        <div className="flex-1 p-6 md:p-8 overflow-y-auto space-y-6">
           <PomodoroTimer showToast={showToast} />
 
           {activeTab === 'Overview' && (
@@ -290,7 +302,11 @@ if (loading) {
           )}
           
           {activeTab === 'Analytics' && (
-            <AnalyticsView token={token} />
+            <AnalyticsView 
+              token={token} 
+              analyticsData={analyticsData} 
+              onRangeChange={(range) => fetchAnalytics(range)} 
+            />
           )}
           
           {activeTab === 'Settings' && (
@@ -299,6 +315,7 @@ if (loading) {
         </div>
       </main>
 
+      {/* Toast Notification Stack */}
       <div className="fixed top-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none">
         {toasts.map((t) => (
           <div key={t.id} className="pointer-events-auto">
