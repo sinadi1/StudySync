@@ -20,7 +20,11 @@ const subjectSchema = new mongoose.Schema(
     hoursStudied: {
       type: Number,
       default: 0,
-    }
+    },
+    targetHours: {
+      type: Number,
+      default: 20,
+    },
   },
   {
     timestamps: true,

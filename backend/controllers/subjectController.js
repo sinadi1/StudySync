@@ -3,7 +3,7 @@ const { updateUserStreak } = require('./analyticsController');
 
 exports.createSubject = async (req, res, next) => {
   try {
-    const { name } = req.body;
+    const { name, targetHours } = req.body;
 
     if (!name) {
       res.status(400);
@@ -13,6 +13,7 @@ exports.createSubject = async (req, res, next) => {
     const subject = await Subject.create({
       name,
       user: req.user.id,
+      targetHours: targetHours ? Number(targetHours) : 20,
     });
 
     res.status(201).json({

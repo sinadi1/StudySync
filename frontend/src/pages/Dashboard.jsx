@@ -83,13 +83,24 @@ export default function Dashboard() {
     } catch (error) { console.error(error); }
   };
 
-  const handleAddSubject = async (e) => {
+  // Updated handleAddSubject to process targetHours passed from StudyTrackerView
+  const handleAddSubject = async (e, targetHours = 20) => {
     e.preventDefault();
     if (!newSubjectName.trim()) return;
     try {
-      const response = await axios.post('http://localhost:5000/api/subjects', { name: newSubjectName }, { headers: { Authorization: `Bearer ${token}` } });
-      if (response.data && response.data.success) { setNewSubjectName(''); fetchSubjects(); }
-    } catch (error) { alert('Failed to add subject'); }
+      const response = await axios.post(
+        'http://localhost:5000/api/subjects',
+        { name: newSubjectName, targetHours: Number(targetHours) },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data && response.data.success) {
+        setNewSubjectName('');
+        fetchSubjects();
+        showToast(`🎯 Subject added with a target of ${targetHours} hours!`, 'success');
+      }
+    } catch (error) {
+      showToast('Failed to add subject', 'error');
+    }
   };
 
   const handleUpdateHours = async (subjectId, hours) => {

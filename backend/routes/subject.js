@@ -7,6 +7,7 @@ const { protect } = require('../middleware/authMiddleware');
 router.route('/')
   .post(protect, createSubject)
   .get(protect, getSubjects);
+
 router.route('/:id/hours').put(protect, logHours);
 router.route('/:id/toggle').put(protect, toggleSubjectStatus);
 
